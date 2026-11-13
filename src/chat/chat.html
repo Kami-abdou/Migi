@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
+  <title>Migi</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="card" id="card">
+    <header class="head">
+      <button type="button" class="who" id="who" aria-haspopup="listbox" aria-expanded="false" title="Switch who you're talking to">
+        <span class="who__avatar" id="who-avatar"></span>
+        <span class="who__text">
+          <span class="who__name"><span id="who-name">Migi</span>
+            <svg class="who__chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="who__title" id="who-title">The lab's bottle</span>
+        </span>
+      </button>
+      <div class="head__actions">
+        <button type="button" class="pill" id="back-migi" hidden>Back to Migi</button>
+        <button type="button" class="icon-btn" id="new-chat" title="New chat" aria-label="New chat">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="pin" title="Keep open when I click elsewhere" aria-label="Keep open" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2h4l-.6 4 2.6 2.4H4L6.6 6 6 2zM8 8.4V14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="close" title="Close" aria-label="Close">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="picker" id="picker" hidden>
+      <label class="picker__search">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input type="search" id="picker-search" placeholder="Search the team" aria-label="Search the team">
+      </label>
+      <ul class="picker__list" id="picker-list" role="listbox" aria-label="Who to talk to"></ul>
+    </div>
+
+    <div class="notice" id="notice" hidden>
+      <p><strong>Migi isn't connected to Claude yet.</strong> Until it is, answers come straight from the lab docs. To switch it on, put <code>ANTHROPIC_API_KEY=…</code> in <code>migi/.env</code> and restart Migi.</p>
+      <button type="button" class="pill pill--dark" id="notice-ok">Got it</button>
+    </div>
+
+    <main class="thread" id="thread" aria-live="polite"></main>
+
+    <form class="composer" id="composer">
+      <div class="composer__files" id="files"></div>
+      <div class="composer__row">
+        <textarea id="input" rows="1" dir="auto" placeholder="Ask a question or drop in a file" aria-label="Your question"></textarea>
+        <input type="file" id="file-input" accept=".md,.txt,.csv,.json,.pdf" multiple hidden>
+        <button type="button" class="icon-btn icon-btn--soft" id="attach" title="Attach a file" aria-label="Attach a file">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 4.5L5.8 9.2a1.4 1.4 0 002 2l5-5a2.8 2.8 0 00-4-4l-5.2 5.2a4.2 4.2 0 006 6l4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+        <button type="submit" class="send" id="send" aria-label="Send">
+          <svg class="send__go" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="send__stop" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </form>
+
+    <div class="drop" id="drop" hidden><p>Drop a file and ask about it</p></div>
+  </div>
+
+  <script src="../shared/dev-shim.js"></script>
+  <script src="../shared/sprites.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "migi",
+  "version": "0.1.0",
+  "description": "A tiny lab bottle that walks on your taskbar and answers questions from the lab's own docs.",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "demo": "electron . --demo",
+    "knowledge": "node scripts/build-knowledge.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2"
+  }
+}
