@@ -53,6 +53,33 @@ your key inside the app: put a small server in between.
   it open, for example while you drag a file in from another window.
 - `Esc` closes the chat. `+` starts a new conversation.
 
+## Finding and opening things on your computer
+
+Ask in plain words: "open my Downloads folder", "find the bottle wall
+budget", "ouvre la calculatrice", "what did I download last?", "open the WLED
+docs". Migi can:
+
+- **search your computer** for files, folders and installed apps by name
+  (including Windows Store apps like Calculator),
+- **list a folder**, newest first if you want,
+- **search the web** (only when connected to Claude; each search is billed on
+  top of the normal tokens),
+- **open** a file, folder, app or web page.
+
+Everything Migi finds shows up in the chat with its own **Open** and **show in
+folder** buttons. When Migi itself wants to open something, a card asks you
+first; nothing opens until you press **Open**. Programs (.exe, .bat, scripts…)
+get a red warning, because opening them runs them. This guard also means a
+web page or a file can't trick Migi into opening something on its own.
+
+What it sees: Migi keeps an index of file and folder **names** (your home
+folder, other drives, installed apps), built in the background a few seconds
+after it starts and refreshed every 15 minutes. It never reads inside your
+files to search. System folders, hidden folders, app data and `node_modules`
+are skipped. When connected to Claude, the names and paths of what it finds
+are sent to Claude to pick the right one. In demo mode (no key) everything
+stays on your machine, and "open …" / "find …" still work.
+
 ## What Migi knows
 
 Everything in `knowledge/` (`.md` and `.txt` files). Add or edit files there;
@@ -77,7 +104,10 @@ default.
 
 ## How the answers work
 
-- Model: `claude-opus-5-5`, effort `low` (short chat answers).
+- Model: `claude-opus-5-5`, effort `medium`.
+- Tools: `search_computer`, `list_folder`, `open_item`, `open_url` (run by
+  Migi, opening always confirmed by you) and Claude's built-in web search
+  (up to 3 searches per question).
 - The knowledge files are attached to the first message of each conversation
   as documents with **citations** on, which is where the numbered sources come
   from.
@@ -95,7 +125,8 @@ default.
 | File | What it does |
 |---|---|
 | `src/main.js` | Windows, tray, menu, cursor watching, message passing |
-| `src/brain.js` | Talks to Claude: docs, citations, caching, streaming, demo mode |
+| `src/brain.js` | Talks to Claude: docs, citations, caching, streaming, tools, demo mode |
+| `src/finder.js` | The index of file, folder and app names, search and folder listing |
 | `src/preload.js` | The bridge between the windows and the main process |
 | `src/pet/` | The creature on the taskbar |
 | `src/chat/` | The chat panel |

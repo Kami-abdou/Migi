@@ -279,6 +279,60 @@ button, input, textarea { font: inherit; color: inherit; }
 .handoff:hover { background: var(--night-2); }
 .handoff__avatar { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--night-2); }
 
+/* ───── things Migi found, and opening them ───── */
+.tools { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.activity { margin: 6px 0 0 !important; font-size: 12.5px; color: var(--ink-soft); }
+.activity::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--led-ink); animation: dot 1.1s infinite; }
+.found, .confirm {
+  padding: 8px 8px 6px;
+  border-radius: 12px;
+  background: var(--paper-2);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.found__title { margin: 0 4px 4px; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); }
+.found__none { margin: 0 4px 4px; font-size: 13px; color: var(--ink-soft); }
+.found__row { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 8px; }
+.found__row:hover { background: rgba(29, 32, 51, 0.05); }
+.found__icon { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: rgba(29, 32, 51, 0.07); color: var(--ink-soft); }
+.found__icon svg { width: 14px; height: 14px; }
+.found__icon--folder { background: rgba(242, 166, 90, 0.2); color: var(--sodium-ink); }
+.found__icon--app { background: var(--night); color: var(--led); }
+.found__icon--link { background: rgba(124, 242, 154, 0.2); color: var(--led-ink); }
+.found__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.found__name { font-size: 13px; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.found__path { font-size: 11px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; }
+.tag-program { display: inline-block; padding: 0 5px; border-radius: 4px; background: rgba(255, 90, 95, 0.14); color: var(--red-ink); font-size: 10.5px; font-weight: 700; vertical-align: 1px; }
+.mini {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--night);
+  color: var(--night-text);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.mini:hover { background: var(--night-2); }
+.mini:disabled { background: rgba(29, 32, 51, 0.08); color: var(--ink-soft); cursor: default; }
+.mini--ghost { display: grid; place-items: center; width: 26px; padding: 0; background: transparent; color: var(--ink-soft); }
+.mini--ghost svg { width: 14px; height: 14px; }
+.mini--ghost:hover { background: rgba(29, 32, 51, 0.08); color: var(--ink); }
+.mini--ghost-text { background: transparent; color: var(--ink-soft); }
+.mini--ghost-text:hover { background: rgba(29, 32, 51, 0.08); color: var(--ink); }
+.confirm { box-shadow: 0 0 0 1.5px var(--sodium); background: #fff8ee; padding: 10px; }
+.confirm__q { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; color: var(--sodium-ink); }
+.confirm__item { display: flex; align-items: center; gap: 8px; }
+.confirm__warn { margin: 7px 0 0; padding: 5px 8px; border-radius: 7px; background: rgba(255, 90, 95, 0.12); color: var(--red-ink); font-size: 12px; font-weight: 600; }
+.confirm__actions { display: flex; gap: 6px; margin-top: 8px; }
+.confirm__actions .mini:first-child { background: var(--led); color: var(--ink); box-shadow: 0 0 10px rgba(124, 242, 154, 0.4); }
+.confirm__state { margin: 7px 0 0; font-size: 12px; font-weight: 650; color: var(--ink-soft); }
+.confirm--opened, .confirm--accepted { box-shadow: 0 0 0 1px rgba(31, 122, 67, 0.4); background: #f3fbf5; }
+.confirm--opened .confirm__state { color: var(--led-ink); }
+.confirm--declined, .confirm--expired, .confirm--cancelled { box-shadow: 0 0 0 1px var(--rule); background: var(--paper-2); }
+.source__link { padding: 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--sodium-ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
 .tag { display: inline-block; margin-top: 7px; padding: 1px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
 .tag--demo { background: rgba(29, 32, 51, 0.07); color: var(--ink-soft); }
 .error { padding: 8px 11px; border-radius: 10px; background: #fff0f0; box-shadow: inset 0 0 0 1px rgba(255, 90, 95, 0.5); color: var(--red-ink); font-size: 13px; }

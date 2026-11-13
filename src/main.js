@@ -7,8 +7,11 @@
   - The chat window opens above Migi when you click it.
 */
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell } = require("electron");
+const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 const { createBrain, KNOWLEDGE_DIR } = require("./brain");
+const { createFinder } = require("./finder");
 
 const DEMO = process.argv.includes("--demo");
 const OPEN_CHAT = process.argv.includes("--open-chat"); // handy for screenshots
@@ -24,6 +27,7 @@ let petWin = null;
 let chatWin = null;
 let tray = null;
 let brain = null;
+let finder = null;
 let petX = 200; // Migi's centre, in pet-window pixels
 let pinned = false; // pinned: the chat stays open when you click elsewhere
 let holdOpen = false; // true while the file picker is open
@@ -145,6 +149,38 @@ function menuTemplate() {
   ];
 }
 
+// ───────────── opening things ─────────────
+
+function places() {
+  const named = {};
+  for (const k of ["home", "desktop", "documents", "downloads", "pictures", "music", "videos"]) {
+    try { named[k] = app.getPath(k); } catch { /* not on this system */ }
+  }
+  return { home: named.home, named };
+}
+
+// Opens a path or a Windows app Migi found. Returns an error message, or null.
+async function openTarget(target) {
+  if (!finder.canOpen(target)) return "not something Migi can open";
+  if (target.startsWith(finder.APPS_FOLDER)) {
+    spawn("explorer.exe", [target], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+    sendPet("pet:state", "happy");
+    return null;
+  }
+  const err = await shell.openPath(target);
+  if (!err) sendPet("pet:state", "happy");
+  return err || null;
+}
+
+function openWebPage(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return;
+    shell.openExternal(u.href);
+    sendPet("pet:state", "happy");
+  } catch { /* not a URL */ }
+}
+
 // Migi's eye follows the cursor anywhere on screen, not only over its window.
 function watchCursor() {
   let lastX = null, lastY = null;
@@ -187,6 +223,7 @@ ipcMain.on("chat:ask", (_e, payload) => {
   sendPet("pet:state", "thinking");
   brain.ask(payload, (event) => {
     sendChat("chat:event", event);
+    if (event.type === "confirm" && !chatWin.isVisible()) showChat(); // don't leave a question hidden
     if (event.type === "delta") sendPet("pet:state", "talking");
     if (event.type === "done") sendPet("pet:state", "happy");
     if (event.type === "error" || event.type === "cancelled") sendPet("pet:state", "idle");
@@ -197,6 +234,13 @@ ipcMain.on("chat:ask", (_e, payload) => {
 ipcMain.on("chat:cancel", () => brain.cancel());
 ipcMain.on("chat:reset", (_e, id) => brain.reset(id));
 ipcMain.on("chat:close", () => chatWin.hide());
+ipcMain.on("chat:confirm", (_e, { id, ok }) => brain.resolveConfirm(id, ok));
+// these come from the person clicking Open / Show in folder / a source link in the chat
+ipcMain.handle("app:open-path", (_e, target) => openTarget(String(target || "")));
+ipcMain.on("app:show-in-folder", (_e, target) => {
+  if (typeof target === "string" && path.isAbsolute(target) && fs.existsSync(target)) shell.showItemInFolder(target);
+});
+ipcMain.on("app:open-url", (_e, url) => openWebPage(String(url || "")));
 ipcMain.on("chat:pin", (_e, on) => { pinned = Boolean(on); });
 ipcMain.on("chat:hold-open", (_e, on) => { holdOpen = Boolean(on); });
 
@@ -206,7 +250,13 @@ app.on("second-instance", () => chatWin && showChat());
 
 app.whenReady().then(() => {
   if (process.platform === "darwin" && app.dock) app.dock.hide(); // Migi lives on the Dock, not in it
-  brain = createBrain({ demo: DEMO });
+  const where = places();
+  finder = createFinder(where);
+  setTimeout(() => finder.refresh(), 3000); // build the file index in the background
+  brain = createBrain({
+    demo: DEMO,
+    computer: { finder, places: where, open: openTarget, openUrl: async (url) => openWebPage(url) }
+  });
   createPet();
   createChat();
   watchCursor();

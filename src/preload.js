@@ -21,6 +21,10 @@ contextBridge.exposeInMainWorld("migi", {
   closeChat: () => ipcRenderer.send("chat:close"),
   pinChat: (on) => ipcRenderer.send("chat:pin", on),
   holdOpen: (on) => ipcRenderer.send("chat:hold-open", on),
+  confirm: (id, ok) => ipcRenderer.send("chat:confirm", { id, ok }),
+  openPath: (target) => ipcRenderer.invoke("app:open-path", target),
+  showInFolder: (target) => ipcRenderer.send("app:show-in-folder", target),
+  openUrl: (url) => ipcRenderer.send("app:open-url", url),
   openKnowledge: () => ipcRenderer.send("app:open-knowledge"),
 
   on(channel, fn) {

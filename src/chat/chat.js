@@ -142,7 +142,7 @@
     const hi = e.id === experts[0].id ? `Hi, I'm ${esc(e.name)}.` : `You're talking to ${esc(e.name)}.`;
     const sub =
       e.id === experts[0].id
-        ? "Ask me about the lab's plans. I answer from the docs in the knowledge folder and show where each answer comes from."
+        ? "Ask me about the lab's plans, or to find and open anything on this computer. I show where my answers come from."
         : `${esc(e.title)}. Answers about ${esc(e.owns)}.`;
     wrap.innerHTML = `<div class="empty__avatar"></div><p class="empty__hi">${hi}</p><p class="empty__sub">${sub}</p><div class="suggestions"></div>`;
     avatarInto(wrap.querySelector(".empty__avatar"), e.sprite, 60);
@@ -175,6 +175,92 @@
     return div;
   }
 
+  // ───────────── things Migi found or wants to open ─────────────
+
+  const ICONS = {
+    folder: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 4.5a1 1 0 011-1h3.3l1.4 1.5h6.3a1 1 0 011 1v6.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z" fill="currentColor"/></svg>',
+    file: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.5h5l3.5 3.5v9a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V2a.5.5 0 01.5-.5z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M9 1.5V5h3.5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>',
+    app: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1.2" fill="currentColor"/><rect x="2" y="9" width="5" height="5" rx="1.2" fill="currentColor"/><rect x="9" y="9" width="5" height="5" rx="1.2" fill="currentColor" opacity=".5"/></svg>',
+    link: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>'
+  };
+  function shortPath(p) {
+    if (!p) return "";
+    if (p.startsWith("shell:AppsFolder")) return "App";
+    return p.length > 52 ? "…" + p.slice(-50) : p;
+  }
+
+  function foundList(t) {
+    const box = document.createElement("div");
+    box.className = "found";
+    if (!t.items.length) {
+      box.innerHTML = `<p class="found__title">${esc(t.title)}</p><p class="found__none">Nothing found.</p>`;
+      return box;
+    }
+    box.innerHTML = `<p class="found__title">${esc(t.title)}</p>`;
+    for (const it of t.items) {
+      const row = document.createElement("div");
+      row.className = "found__row";
+      row.innerHTML = `<span class="found__icon found__icon--${it.kind}">${ICONS[it.kind] || ICONS.file}</span>
+        <span class="found__text"><span class="found__name">${esc(it.name)}${it.program ? ' <span class="tag-program">program</span>' : ""}</span>
+        <span class="found__path" title="${esc(it.path)}">${esc(shortPath(it.path))}</span></span>`;
+      if (it.kind !== "app") {
+        const reveal = document.createElement("button");
+        reveal.type = "button";
+        reveal.className = "mini mini--ghost";
+        reveal.title = "Show in folder";
+        reveal.setAttribute("aria-label", `Show ${it.name} in its folder`);
+        reveal.innerHTML = ICONS.folder;
+        reveal.addEventListener("click", () => migi.showInFolder(it.path));
+        row.appendChild(reveal);
+      }
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "mini";
+      open.textContent = "Open";
+      open.setAttribute("aria-label", `Open ${it.name}`);
+      open.addEventListener("click", async () => {
+        const err = await migi.openPath(it.path);
+        open.textContent = err ? "Couldn't" : "Opened";
+        open.disabled = true;
+      });
+      row.appendChild(open);
+      box.appendChild(row);
+    }
+    return box;
+  }
+
+  function confirmCard(t, m) {
+    const card = document.createElement("div");
+    card.className = `confirm confirm--${t.state || "waiting"}`;
+    const it = t.item;
+    const what = it.kind === "link" ? "this page" : it.kind === "app" ? "this app" : it.kind === "folder" ? "this folder" : "this file";
+    card.innerHTML = `<p class="confirm__q">${esc(expert(m.expertId).name)} wants to open ${what}</p>
+      <div class="confirm__item"><span class="found__icon found__icon--${it.kind}">${ICONS[it.kind] || ICONS.file}</span>
+        <span class="found__text"><span class="found__name">${esc(it.name)}</span><span class="found__path" title="${esc(it.path)}">${esc(shortPath(it.path))}</span></span></div>
+      ${it.program ? '<p class="confirm__warn">This is a program. Opening it runs it.</p>' : ""}`;
+    if (!t.state) {
+      const row = document.createElement("div");
+      row.className = "confirm__actions";
+      row.innerHTML = '<button type="button" class="mini">Open</button><button type="button" class="mini mini--ghost-text">Not now</button>';
+      const [yes, no] = row.querySelectorAll("button");
+      yes.addEventListener("click", () => { t.state = "accepted"; migi.confirm(t.id, true); replace(m); });
+      no.addEventListener("click", () => { t.state = "declined"; migi.confirm(t.id, false); replace(m); });
+      card.appendChild(row);
+    } else {
+      const label = { accepted: "Opening…", opened: "Opened", declined: "Not opened", expired: "No answer, not opened", cancelled: "Stopped" }[t.state] || "";
+      card.insertAdjacentHTML("beforeend", `<p class="confirm__state">${label}</p>`);
+    }
+    return card;
+  }
+
+  function toolsArea(m) {
+    if (!m.tools || !m.tools.length) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "tools";
+    for (const t of m.tools) wrap.appendChild(t.type === "found" ? foundList(t) : confirmCard(t, m));
+    return wrap;
+  }
+
   function answerMsg(m) {
     const e = expert(m.expertId);
     const div = document.createElement("div");
@@ -183,17 +269,22 @@
     const body = document.createElement("div");
     body.className = "answer";
     div.appendChild(body);
+    const tools = toolsArea(m);
     if (m.error) {
       body.className = "error";
       body.textContent = m.error;
+      if (tools) div.insertBefore(tools, body);
       return div;
     }
     if (!m.answer) {
       // still streaming
       if (m.text) { body.classList.add("is-streaming"); body.innerHTML = markdown(hideHandoffLine(m.text)); }
       else body.innerHTML = '<span class="typing" aria-label="Thinking"><i></i><i></i><i></i></span>';
+      if (m.activity) body.insertAdjacentHTML("beforeend", `<p class="activity">${esc(m.activity)}…</p>`);
+      if (tools) div.appendChild(tools);
       return div;
     }
+    if (tools) div.appendChild(tools);
     body.innerHTML = renderParts(m.answer.parts);
     if (m.answer.sources.length) {
       const ol = document.createElement("ol");
@@ -204,7 +295,10 @@
           .map((s) => {
             const c = cleanQuote(s.quote);
             const q = c.length > 150 ? c.slice(0, 147).trimEnd() + "…" : c;
-            return `<li class="source" data-src="${s.n}"><span class="source__n">${s.n}</span><span><span class="source__title">${esc(s.title)}</span>: “${esc(q)}”</span></li>`;
+            const title = s.url
+              ? `<button type="button" class="source__title source__link" data-url="${esc(s.url)}" title="${esc(s.url)}">${esc(s.title)}</button>`
+              : `<span class="source__title">${esc(s.title)}</span>`;
+            return `<li class="source" data-src="${s.n}"><span class="source__n">${s.n}</span><span>${title}${q ? `: “${esc(q)}”` : ""}</span></li>`;
           })
           .join("");
       body.appendChild(ol);
@@ -249,6 +343,8 @@
 
   // citation buttons: highlight the matching source line
   thread.addEventListener("click", (e) => {
+    const link = e.target.closest(".source__link");
+    if (link) { migi.openUrl(link.dataset.url); return; }
     const ref = e.target.closest(".ref");
     if (!ref) return;
     const msg = ref.closest(".msg");
@@ -292,6 +388,24 @@
 
   migi.on("chat:event", (ev) => {
     if (!live) return;
+    if (ev.type === "activity") {
+      live.activity = ev.text;
+      replace(live);
+      return;
+    }
+    if (ev.type === "found" || ev.type === "confirm") {
+      live.tools = live.tools || [];
+      live.tools.push(ev.type === "found" ? { type: "found", title: ev.title, items: ev.items } : { type: "confirm", id: ev.id, item: ev.item, state: null });
+      live.activity = null;
+      replace(live);
+      thread.scrollTop = thread.scrollHeight;
+      return;
+    }
+    if (ev.type === "confirm-done" || ev.type === "opened") {
+      const t = (live.tools || []).find((x) => x.type === "confirm" && (ev.id ? x.id === ev.id : x.item.path === ev.item.path && x.state === "accepted"));
+      if (t) { t.state = ev.type === "opened" ? "opened" : ev.state === "accepted" ? "accepted" : ev.state; replace(live); }
+      return;
+    }
     if (ev.type === "delta") {
       live.text += ev.text;
       replace(live);

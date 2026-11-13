@@ -42,6 +42,23 @@
     setExpert(id) { expertId = id; emit("app:expert", id); },
     ask({ text }) {
       emit("pet:state", "thinking");
+      if (/^(open|find)\b/i.test(text)) {
+        // pretend Migi searched the computer and wants to open the top result
+        const items = [
+          { name: "Bottle wall budget.xlsx", path: "C:\\Users\\you\\Documents\\Lab\\Bottle wall budget.xlsx", kind: "file", program: false, modified: "2026-11-10" },
+          { name: "Lab", path: "C:\\Users\\you\\Documents\\Lab", kind: "folder", program: false },
+          { name: "Calculatrice", path: "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App", kind: "app", program: false }
+        ];
+        emit("chat:event", { type: "activity", text: "Searching your computer for “budget”" });
+        setTimeout(() => emit("chat:event", { type: "found", title: "Found for “budget”", items }), 500);
+        if (/^open/i.test(text)) setTimeout(() => emit("chat:event", { type: "confirm", id: "c1", item: items[0] }), 800);
+        setTimeout(() => {
+          emit("chat:event", { type: "delta", text: "Found it." });
+          emit("chat:event", { type: "done", answer: { parts: [{ text: "Found it.", refs: [] }], sources: [], handoff: null } });
+          emit("pet:state", "happy");
+        }, 1100);
+        return;
+      }
       const answer = JSON.parse(JSON.stringify(canned));
       if (/power|pixel|volt/i.test(text)) answer.handoff = "build-lead";
       const full = answer.parts.map((p) => p.text).join("") + (answer.handoff ? "\n→ ask: build-lead" : "");
@@ -63,6 +80,10 @@
     closeChat() {},
     pinChat() {},
     holdOpen() {},
+    confirm(id, ok) { console.log("[shim] confirm", id, ok); },
+    async openPath(p) { console.log("[shim] open", p); return null; },
+    showInFolder(p) { console.log("[shim] show", p); },
+    openUrl(u) { console.log("[shim] url", u); },
     openKnowledge() {},
     on(ch, fn) {
       (listeners[ch] = listeners[ch] || []).push(fn);
